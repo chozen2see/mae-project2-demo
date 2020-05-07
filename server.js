@@ -5,27 +5,21 @@ const express = require('express');
 const methodOverride = require('method-override');
 const mongoose = require('mongoose');
 const app = express();
-// const db = mongoose.connection;
+const Fruit = require('./models/fruits.js');
 //___________________
 //Port
 //___________________
 // Allow use of Heroku's port or your own local port, depending on the environment
 const PORT = process.env.PORT || 3000;
-
 //___________________
 //Database
 //___________________
 // How to connect to the database either via heroku or locally
-// allow use of mongodb from heroku or use our local host
 const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://localhost:27017/demo-2';
-//'mongodb://localhost/270717' + `YOUR DATABASE NAME`;
-
 // Connect to Mongo
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
-
 // Error / success
-// could be db.connection.on('error', (err) =>
 mongoose.connection.on('error', (err) =>
   console.log(err.message + ' is Mongod not running?')
 );
@@ -33,24 +27,18 @@ mongoose.connection.on('connected', () =>
   console.log('mongo connected: ', MONGODB_URI)
 );
 mongoose.connection.on('disconnected', () => console.log('mongo disconnected'));
-
 // open the connection to mongo
 mongoose.connection.on('open', () => {});
-
 //___________________
 //Middleware
 //___________________
-
 //use public folder for static assets
 app.use(express.static('public'));
-
 // populates req.body with parsed info from forms - if no data from forms will return an empty object {}
 app.use(express.urlencoded({ extended: false })); // extended: false - does not allow nested objects in query strings
 app.use(express.json()); // returns middleware that only parses JSON - may or may not need it depending on your project
-
 //use method override
 app.use(methodOverride('_method')); // allow POST, PUT and DELETE from a form
-
 //___________________
 // Routes
 //___________________
@@ -58,7 +46,39 @@ app.use(methodOverride('_method')); // allow POST, PUT and DELETE from a form
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
-
+app.get('/fruits', (req, res) => {
+  Fruit.find({}, (err, fruits) => {
+    if (err) {
+      res.send('Dude you messed up');
+    } else {
+      res.send(fruits);
+    }
+  });
+});
+app.get('/seed', (req, res) => {
+  Fruit.create(
+    [
+      {
+        name: 'grapefruit',
+        color: 'pink',
+        readyToEat: true,
+      },
+      {
+        name: 'tangerine',
+        color: 'orange',
+        readyToEat: false,
+      },
+      {
+        name: 'avocado',
+        color: 'green',
+        readyToEat: true,
+      },
+    ],
+    (err, data) => {
+      res.redirect('/fruits');
+    }
+  );
+});
 //___________________
 //Listener
 //___________________
